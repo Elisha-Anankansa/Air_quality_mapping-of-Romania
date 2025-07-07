@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Mapping: Land Cover Correlation and Population Exposure</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+        .gif-banner {
+            width: 100%;
+            height: 260px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .gif-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+        }
+        .banner-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 2;
+        }
+        .banner-content h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .banner-content p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .animated-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        .particle {
+            position: absolute;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: floatUp 8s infinite linear;
+        }
+        @keyframes floatUp {
+            0% {
+                transform: translateY(260px) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-20px) scale(1);
+                opacity: 0;
+            }
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header-nav {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-decoration: none;
+            position: relative;
+            display: inline-block;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: #fff !important;
+            padding: 0.7rem 2rem;
+            border-radius: 30px;
+            box-shadow: 0 4px 24px rgba(102,126,234,0.15);
+            letter-spacing: 0.02em;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            opacity: 1;
+            animation: fadeInLogo 1.2s cubic-bezier(.4,0,.2,1);
+        }
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(102,126,234,0.25);
+        }
+        @keyframes fadeInLogo {
+            from { opacity: 0; transform: translateY(-30px) scale(0.95);}
+            to   { opacity: 1; transform: translateY(0) scale(1);}
+        }
+        .logo.vanish {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s cubic-bezier(.4,0,.2,1);
+        }
+        .logo.reappear {
+            opacity: 1;
+            pointer-events: auto;
+            animation: fadeInLogo 0.8s cubic-bezier(.4,0,.2,1);
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        .nav-links a:hover::before, .nav-links a.active::before {
+            left: 0;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: white;
+        }
+        .main-header {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .main-header h1 {
+            font-size: 3rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .main-header .subtitle {
+            font-size: 1.3rem;
+            color: #666;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        .main-header .description {
+            font-size: 1.1rem;
+            color: #555;
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+        .research-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .highlight-card {
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .highlight-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .highlight-card .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .highlight-card h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        .highlight-card p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .feature-image {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: rgba(103, 126, 234, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        .feature-image img {
+            max-width: 100%;
+            height: 320px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .feature-image .caption {
+            margin-top: 1rem;
+            font-style: italic;
+            color: #666;
+            font-size: 1rem;
+        }
+        .section-title {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .section p {
+            margin-bottom: 1.5rem;
+            text-align: justify;
+        }
+        .section ul, .section ol {
+            margin-bottom: 1.5rem;
+        }
+        .section li {
+            margin-bottom: 0.8rem;
+        }
+        .data-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .spec-card {
+            background: linear-gradient(135deg, rgba(103, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        .spec-card h4 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .spec-card p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        .methodology-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .flow-step {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        .flow-step::before {
+            content: attr(data-step);
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .flow-step h4 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .flow-step p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .team-member {
+            background: linear-gradient(135deg, rgba(103, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .team-member:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .team-member img, .placeholder-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            border: 4px solid #667eea;
+        }
+        .team-member h3 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .team-member .student-info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .team-member .role {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .research-objectives {
+            background: linear-gradient(135deg, rgba(103, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .objectives-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .objective-item {
+            background: rgba(255,255,255,0.8);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .objective-item h4 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .objective-item p {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        .footer {
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        .footer p {
+            margin: 0.5rem 0;
+        }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .main-header h1 { font-size: 2rem; }
+            .team-grid { grid-template-columns: 1fr; }
+            .gif-banner { height: 140px; }
+            .research-highlights { grid-template-columns: 1fr; }
+            .methodology-flow { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="gif-banner">
+    <img src="images/smokestacks.gif" alt="Air Pollution Banner" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;z-index:0;">
+    <div class="animated-particles" id="particles"></div>
+    <div class="banner-content">
+        <h2>🌍 Air Quality Research: A Case Study of Romania</h2>
+        <p>Advanced Environmental Monitoring & Analysis</p>
+    </div>
+</div>
+    <div class="container">
+        <!-- Header Navigation -->
+        <nav class="header-nav">
+            <a href="index.html" class="logo" id="animatedLogo">
+                🌍 Air Quality Research Hub
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="webgis.html">WebGIS Map</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Header -->
+        <header class="main-header">
+            <h1>Air Quality Mapping in Romania</h1>
+            <p class="subtitle">Spatiotemporal Analysis of Land Cover Correlation and Population Exposure</p>
+            <p class="description">
+                A comprehensive geospatial research project examining the complex relationships between air quality, land use patterns, and population exposure across Romania. Using advanced GIS techniques, remote sensing data, and atmospheric modeling, we analyze decade-long trends in key air pollutants and their environmental determinants to support evidence-based environmental policy and public health initiatives.
+            </p>
+        </header>
+
+        <!-- Research Highlights -->
+        <div class="research-highlights">
+            <div class="highlight-card">
+                <div class="icon">🔬</div>
+                <h3>10-Year Analysis</h3>
+                <p>Comprehensive temporal analysis of air quality trends from 2013-2022 using CAMS atmospheric monitoring data</p>
+            </div>
+            <div class="highlight-card">
+                <div class="icon">🗺️</div>
+                <h3>Multi-Pollutant Study</h3>
+                <p>Simultaneous analysis of NO₂, PM2.5, and PM10 concentrations across diverse Romanian landscapes</p>
+            </div>
+            <div class="highlight-card">
+                <div class="icon">📊</div>
+                <h3>Population Impact</h3>
+                <p>Quantitative assessment of air quality exposure risks for 19.3 million Romanian residents</p>
+            </div>
+        </div>
+
+        <!-- Abstract -->
+        <section class="section">
+            <h2 class="section-title">Abstract</h2>
+            <p>
+                Air pollution represents one of the most pressing environmental challenges of the 21st century, with significant implications for public health, ecosystem integrity, and climate change. This research project employs advanced geospatial analysis techniques to investigate the spatiotemporal patterns of air quality across Romania, focusing on three critical pollutants: Nitrogen Dioxide (NO₂), Fine Particulate Matter (PM2.5), and Coarse Particulate Matter (PM10).
+            </p>
+            <p>
+                Our study integrates multiple high-resolution datasets, including Copernicus Atmosphere Monitoring Service (CAMS) atmospheric composition data, European Space Agency Climate Change Initiative (ESA CCI) land cover classifications, and WorldPop demographic information. Through rigorous spatial analysis, we examine how different land use patterns—urban development, agricultural practices, forest coverage, and industrial activities—correlate with pollutant concentrations and subsequently affect population exposure levels.
+            </p>
+            <p>
+                The research methodology combines traditional GIS techniques with modern web-based visualization tools, creating an interactive platform that enables stakeholders to explore air quality patterns at multiple spatial and temporal scales. This approach facilitates evidence-based decision-making for environmental policy, urban planning, and public health interventions.
+            </p>
+        </section>
+
+        <!-- Research Objectives -->
+        <div class="research-objectives">
+            <h2 class="section-title">Study Objectives</h2>
+            <div class="objectives-list">
+                <div class="objective-item">
+                    <h4>Spatiotemporal Mapping</h4>
+                    <p>Develop comprehensive maps showing air quality variations across Romania's diverse geographical regions and temporal trends over the past decade.</p>
+                </div>
+                <div class="objective-item">
+                    <h4>Land Cover Correlation</h4>
+                    <p>Quantify relationships between different land use types and pollutant concentrations to identify environmental drivers of air quality.</p>
+                </div>
+                <div class="objective-item">
+                    <h4>Population Exposure Assessment</h4>
+                    <p>Calculate population-weighted exposure indices to identify vulnerable communities and inform targeted public health interventions.</p>
+                </div>
+                <div class="objective-item">
+                    <h4>Policy Recommendations</h4>
+                    <p>Generate evidence-based recommendations for air quality management strategies and environmental policy development.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Area -->
+        <section class="section">
+            <h2 class="section-title">🗺️ Study Area</h2>
+            <div class="feature-image">
+                <img src="images/studyarea.jpg" alt="Study area map of Romania">
+                <p class="caption">
+                    <strong>Figure 1:</strong> Romania study area showing administrative boundaries, major cities, and diverse geographical features. 
+                    <em>Source: Administrative boundaries from Eurostat, 2025</em>
+                </p>
+            </div>
+            <p>
+                Romania serves as an ideal case study for air quality research due to its diverse geographical characteristics, ranging from the Carpathian Mountains to the Danube River Delta, and its complex mixture of urban, industrial, and rural landscapes. The country's location in Southeastern Europe positions it at the intersection of various atmospheric transport patterns, making it particularly susceptible to both local pollution sources and transboundary air quality impacts.
+            </p>
+            <p>
+                With a population of approximately 19.3 million inhabitants distributed across 238,391 km², Romania exhibits significant spatial heterogeneity in population density, land use patterns, and economic activities. Major urban centers including Bucharest, Cluj-Napoca, Timișoara, and Constanța represent areas of high population concentration and industrial activity, while extensive rural areas maintain predominantly agricultural land use with lower population densities.
+            </p>
+            <p>
+                The country's air quality challenges stem from multiple sources: vehicle emissions in urban areas, industrial activities concentrated in specific regions, agricultural practices including seasonal biomass burning, and residential heating primarily using solid fuels in rural areas. These diverse pollution sources create complex spatial patterns that require sophisticated analytical approaches to understand and address effectively.
+            </p>
+
+            <div class="data-specs">
+                <div class="spec-card">
+                    <h4>🌍 Geographic Coverage</h4>
+                    <p>Complete national territory (238,391 km²) with high-resolution spatial analysis</p>
+                </div>
+                <div class="spec-card">
+                    <h4>👥 Population Scope</h4>
+                    <p>19.3 million inhabitants across urban and rural settlements</p>
+                </div>
+                <div class="spec-card">
+                    <h4>📅 Temporal Range</h4>
+                    <p>2013-2022 decade-long analysis period with monthly temporal resolution</p>
+                </div>
+                <div class="spec-card">
+                    <h4>🎯 Spatial Resolution</h4>
+                    <p>0.1° × 0.1° grid cells (~11 km) for atmospheric data integration</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Methodology -->
+        <section class="section">
+            <h2 class="section-title">🔬Methodology</h2>
+            <p>
+                Our research employs a comprehensive multi-stage methodology that integrates remote sensing, atmospheric modeling, and advanced geospatial analysis techniques. The approach follows established protocols for environmental monitoring and spatial analysis, ensuring reproducibility and scientific rigor while addressing the complex challenges of air quality assessment at national scale.
+            </p>
+
+            <div class="methodology-flow">
+                <div class="flow-step" data-step="1">
+                    <h4>Data Acquisition</h4>
+                    <p>Collection of multi-source datasets including CAMS atmospheric data, ESA land cover, and WorldPop demographics</p>
+                </div>
+                <div class="flow-step" data-step="2">
+                    <h4>Preprocessing</h4>
+                    <p>Geometric correction, temporal aggregation, and spatial harmonization of all datasets to common projection and resolution</p>
+                </div>
+                <div class="flow-step" data-step="3">
+                    <h4>Spatial Analysis</h4>
+                    <p>Zonal statistics, correlation analysis, and bivariate mapping to identify relationships between variables</p>
+                </div>
+                <div class="flow-step" data-step="4">
+                    <h4>Visualization</h4>
+                    <p>Interactive web mapping and statistical visualization for comprehensive results presentation</p>
+                </div>
+            </div>
+
+            <h3>Data Sources and Specifications</h3>
+            <p>
+                The research utilizes several authoritative datasets that provide comprehensive coverage of atmospheric composition, land use patterns, and demographic distributions. Each dataset has been selected based on its temporal coverage, spatial resolution, and scientific validation to ensure the highest quality of analytical results.
+            </p>
+
+            <div class="data-specs">
+                <div class="spec-card">
+                    <h4>🛰️ CAMS Atmospheric Data</h4>
+                    <p>European Centre for Medium-Range Weather Forecasts (ECMWF) Copernicus Atmosphere Monitoring Service providing validated atmospheric composition data with global coverage</p>
+                </div>
+                <div class="spec-card">
+                    <h4>🌿 ESA CCI Land Cover</h4>
+                    <p>European Space Agency Climate Change Initiative Land Cover maps with 300m resolution, providing detailed classification of land use types</p>
+                </div>
+                <div class="spec-card">
+                    <h4>📊 WorldPop Demographics</h4>
+                    <p>High-resolution population distribution data at 100m resolution, enabling precise population exposure calculations</p>
+                </div>
+                <div class="spec-card">
+                    <h4>🗺️ Administrative Boundaries</h4>
+                    <p>Official Romanian administrative boundaries from Eurostat, ensuring accurate spatial delimitation and policy relevance</p>
+                </div>
+            </div>
+
+            <h3>Analytical Framework</h3>
+            <p>
+                The analytical framework employs a hierarchical approach, beginning with individual pollutant analysis and progressing to integrated multi-pollutant assessments. Statistical analysis includes correlation coefficients, regression analysis, and spatial autocorrelation measures to identify significant relationships between air quality and environmental variables.
+            </p>
+            <p>
+                Population exposure assessment utilizes population-weighted concentration indices, calculating the number of people exposed to different pollution levels according to World Health Organization (WHO) and European Union (EU) air quality standards. This approach enables identification of vulnerable populations and supports targeted public health interventions.
+            </p>
+        </section>
+
+        <!-- Introduction -->
+        <section class="section">
+            <h2 class="section-title">📚 Background and Significance of the Study</h2>
+            <div class="feature-image">
+                <img src="images/smoked.jpg" alt="Urban air pollution in Romania">
+                <p class="caption">
+                    <strong>Figure 2:</strong> Urban air pollution in Romania highlighting the critical need for comprehensive monitoring and analysis of atmospheric pollutants.
+                </p>
+            </div>
+            <p>
+                Air quality degradation represents a critical environmental and public health challenge across Europe, with Romania experiencing some of the continent's most significant air pollution burdens. According to the European Environment Agency, Romania consistently ranks among EU member states with the highest levels of particulate matter and nitrogen dioxide concentrations, particularly in urban and industrial areas.
+            </p>
+            <p>
+                The health implications of air pollution exposure are well-documented, with fine particulate matter (PM2.5) and nitrogen dioxide (NO₂) linked to cardiovascular disease, respiratory conditions, and premature mortality. The World Health Organization estimates that air pollution contributes to approximately 7 million premature deaths globally each year, with Eastern European countries experiencing disproportionately high rates.
+            </p>
+            <p>
+                This research addresses critical knowledge gaps in understanding the spatial patterns of air quality across Romania and their relationships with land use characteristics. By integrating high-resolution atmospheric monitoring data with detailed land cover information, the study provides unprecedented insights into the environmental drivers of air pollution and their implications for population health.
+            </p>
+            <p>
+                The findings from this research contribute to multiple domains including environmental science, public health, urban planning, and policy development. The interactive visualization platform developed as part of this project enables stakeholders to explore air quality patterns and make informed decisions about environmental management strategies.
+            </p>
+        </section>
+
+        <!-- Team Members -->
+        <section class="section">
+            <h2 class="section-title">👥 Research Team</h2>
+            <p>
+                Our interdisciplinary research team brings together expertise in environmental monitoring, geospatial analysis, and atmospheric sciences. Each team member contributes specialized knowledge and technical skills to ensure comprehensive analysis of air quality patterns and their environmental determinants.
+            </p>
+            <div class="team-grid">
+                <div class="team-member">
+                    <img src="images/Elishaa.jpg" alt="Elisha Akanlo">
+                    <h3>Elisha Akanlo</h3>
+                    <div class="student-info">
+                        <div><strong>Student ID:</strong> 11084019</div>
+                        <div><strong>Email:</strong> elishakakanlo.anankansa@mail.polimi.it</div>
+                        <div><strong>Specialization:</strong> Nitrogen Dioxide (NO₂) trend analysis</div>
+                    </div>
+                    <div class="role">NO₂ Geospatial & Data Integration</div>
+                </div>
+                <div class="team-member">
+                    <!-- <div class="placeholder-avatar" style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg, #667eea, #764ba2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 1rem auto;font-weight:bold;">VS</div> -->
+                    <img src="images/VimalaSakshiGangu.png" alt="Vimala Sakshi Gangu">
+                    <h3>Vimala Sakshi</h3>
+                    <div class="student-info">
+                        <div><strong>Student ID:</strong> 11107940</div>
+                        <div><strong>Email:</strong> vimalasakshi.gangu@mail.polimi.it</div>
+                        <div><strong>Specialization:</strong> Fine Particulate Matter (PM2.5)</div>
+                    </div>
+                    <div class="role">PM2.5 Analysis Specialist & Health Impact Assessment</div>
+                </div>
+                <div class="team-member">
+                    <img src="images/Kuot Akuei.jpg" alt="Kuot Akuei">
+                    <h3>Kuot Akuei</h3>
+                    <div class="student-info">
+                        <div><strong>Student ID:</strong> 280887</div>
+                        <div><strong>Email:</strong> kuotakuei.nyang@mail.polimi.it</div>
+                        <div><strong>Specialization:</strong> Coarse Particulate Matter (PM10)</div>
+                    </div>
+                    <div class="role">PM10 Analysis Specialist</div>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 2rem; font-style: italic; color: #666;">
+                This collaborative research represents the culmination of advanced geospatial analysis techniques and environmental monitoring expertise. Each team member brings unique perspectives and technical capabilities, ensuring comprehensive analysis of air quality patterns and their environmental determinants. The project demonstrates the integration of traditional GIS methodologies with modern web-based visualization technologies to address pressing environmental challenges.
+            </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p><strong>&copy; 2025 GIS Laboratory Group 10 - Politecnico di Milano</strong></p>
+            <p>Air Quality Mapping: Land Cover Correlation and Population Exposure Analysis</p>
+            <p style="margin-top: 1rem; opacity: 0.9; font-size: 0.9rem;">
+                Advanced geospatial research for environmental monitoring, public health assessment, and sustainable development
+            </p>
+            <p style="opacity: 0.8; font-size: 0.85rem;">
+                Supported by Politecnico di Milano - Department of Civil and Environmental Engineering
+            </p>
+        </footer>
+    </div>
+    <script>
+        // Enhanced logo animation with particle effect
+        const logo = document.getElementById('animatedLogo');
+        
+        // Vanish and reappear animation
+        logo.addEventListener('click', function(e) {
+            e.preventDefault();
+            logo.classList.add('vanish');
+            logo.classList.remove('reappear');
+            
+            // Create particle effect
+            createParticleEffect(e.clientX, e.clientY);
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (logo.classList.contains('vanish') && !logo.contains(e.target)) {
+                logo.classList.remove('vanish');
+                logo.classList.add('reappear');
+            }
+        });
+        
+        // Particle effect function
+        function createParticleEffect(x, y) {
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'fixed';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.width = '6px';
+                particle.style.height = '6px';
+                particle.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                particle.style.borderRadius = '50%';
+                particle.style.pointerEvents = 'none';
+                particle.style.zIndex = '1000';
+                particle.style.transition = 'all 0.8s ease-out';
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    const angle = (i * 30) * Math.PI / 180;
+                    const distance = 100 + Math.random() * 50;
+                    particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+                    particle.style.opacity = '0';
+                    particle.style.transform += ' scale(0)';
+                }, 10);
+                
+                setTimeout(() => {
+                    document.body.removeChild(particle);
+                }, 800);
+            }
+        }
+        
+        // Smooth scrolling for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        // Observe elements for animation
+        document.querySelectorAll('.section, .highlight-card, .team-member').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+        
+        // Add dynamic background animation
+        function createFloatingElements() {
+            const container = document.body;
+            const elements = ['🌬️', '🌍', '📊', '🔬', '🗺️'];
+            
+            elements.forEach((emoji, index) => {
+                const element = document.createElement('div');
+                element.textContent = emoji;
+                element.style.position = 'fixed';
+                element.style.fontSize = '2rem';
+                element.style.opacity = '0.1';
+                element.style.pointerEvents = 'none';
+                element.style.zIndex = '1';
+                element.style.animation = `float ${15 + index * 3}s infinite linear`;
+                element.style.left = Math.random() * 100 + '%';
+                element.style.animationDelay = index * 3 + 's';
+                
+                container.appendChild(element);
+            });
+        }
+        
+        // Add CSS animation for floating elements
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% {
+                    transform: translateY(100vh) rotate(0deg);
+                }
+                100% {
+                    transform: translateY(-100px) rotate(360deg);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Create animated particles for banner
+        function createBannerParticles() {
+            const particleContainer = document.getElementById('particles');
+            if (!particleContainer) return;
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.width = (Math.random() * 4 + 2) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                particleContainer.appendChild(particle);
+            }
+        }
+        
+        // Initialize banner particles
+        createBannerParticles();
+        
+        // Add parallax effect to banner
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const banner = document.querySelector('.gif-banner');
+            if (banner) {
+                banner.style.transform = `translateY(${scrolled * 0.5}px)`;
+            }
+        });
+    </script>
+</body>
+</html>
