@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebGIS – Romania NO₂ Results</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.2/ol.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      height: 100%; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+    }
+    
+    #map { 
+      height: 100vh; 
+      width: 100vw; 
+    }
+    
+    /* Header */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      color: white;
+      padding: 10px 20px;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 300;
+    }
+    
+    .home-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 8px 15px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .home-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-1px);
+    }
+    
+    /* Layer Switcher */
+    .layer-switcher {
+      position: absolute;
+      top: 70px; 
+      left: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 14px;
+      z-index: 1000;
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+      min-width: 220px;
+      transition: all 0.3s ease;
+    }
+    
+    .layer-switcher.collapsed {
+      transform: translateX(-85%);
+    }
+    
+    .layer-switcher h3 {
+      margin: 0 0 10px 0;
+      color: #2c3e50;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .layer-switcher label {
+      display: block;
+      margin: 8px 0;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+    
+    .layer-switcher label:hover {
+      background: #f8f9fa;
+    }
+    
+    .layer-switcher input {
+      margin-right: 8px;
+    }
+    
+    .layer-switcher hr {
+      margin: 15px 0;
+      border: 0;
+      border-top: 1px solid #ddd;
+    }
+    
+    .toggle-panel {
+      position: absolute;
+      right: -25px;
+      top: 10px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 0 4px 4px 0;
+      padding: 8px 5px;
+      cursor: pointer;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    
+    /* Map Controls */
+    .map-controls {
+      position: absolute;
+      top: 70px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+    
+    .control-group {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    
+    .control-btn {
+      background: white;
+      border: none;
+      padding: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 45px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .control-btn:last-child {
+      border-bottom: none;
+    }
+    
+    .control-btn:hover {
+      background: #f8f9fa;
+      color: #3498db;
+    }
+    
+    .control-btn:active {
+      background: #e9ecef;
+    }
+    
+    /* Legend */
+    .legend {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 12px;
+      z-index: 1000;
+      max-width: 250px;
+      display: none;
+    }
+    
+    .legend.active {
+      display: block;
+    }
+    
+    .legend h4 {
+      margin: 0 0 10px 0;
+      color: #2c3e50;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .legend-close {
+      cursor: pointer;
+      color: #999;
+      font-size: 16px;
+    }
+    
+    .legend-close:hover {
+      color: #666;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      gap: 8px;
+    }
+    
+    .legend-color {
+      width: 20px;
+      height: 15px;
+      border-radius: 2px;
+      border: 1px solid #ccc;
+    }
+    
+    /* Status */
+    .status {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status.loading::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border: 2px solid #ffffff;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.2rem;
+      }
+      
+      .layer-switcher {
+        min-width: 200px;
+        font-size: 13px;
+      }
+      
+      .map-controls {
+        right: 5px;
+      }
+      
+      .legend {
+        bottom: 60px;
+        right: 5px;
+        max-width: calc(100vw - 20px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1><i class="fas fa-map-marked-alt"></i> Romania NO₂ Analysis Dashboard</h1>
+    <a href="#" class="home-btn" onclick="goHome()">
+      <i class="fas fa-home"></i> Home
+    </a>
+  </div>
+
+  <!-- Map Container -->
+  <div id="map"></div>
+  
+  <!-- Status Indicator -->
+  <div id="status" class="status loading">Loading...</div>
+
+  <!-- Layer Switcher Panel -->
+  <div class="layer-switcher" id="layerSwitcher">
+    <div class="toggle-panel" onclick="toggleLayerPanel()">
+      <i class="fas fa-chevron-left" id="panelToggleIcon"></i>
+    </div>
+    
+    <h3><i class="fas fa-layer-group"></i> Base Maps</h3>
+    <label><input type="radio" name="basemap" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
+    <label><input type="radio" name="basemap" value="esri"> <i class="fas fa-satellite"></i> ESRI Satellite</label>
+    
+    <hr/>
+    
+    <h3><i class="fas fa-smog"></i> Pollutant Type Data Layers</h3>
+    <label><input type="checkbox" class="overlay" value="no2dec2022"> NO₂ December 2022</label>
+    <label><input type="checkbox" class="overlay" value="landcover2022"> Land Cover 2022</label>
+    <label><input type="checkbox" class="overlay" value="avgno22022"> Average NO₂ 2022</label>
+    <label><input type="checkbox" class="overlay" value="aad2022"> NO₂ AAD 2022</label>
+    <label><input type="checkbox" class="overlay" value="bivariate2020"> NO₂ Bivariate 2020</label>
+    <label><input type="checkbox" class="overlay" value="chart2020"> NO₂ Chart 2020</label>
+    <label><input type="checkbox" class="overlay" value="conc2020"> NO₂ Concentration 2020</label>
+    <label><input type="checkbox" class="overlay" value="pm10aad2022"> PM₁₀ AAD 2017–2021</label>
+    <label><input type="checkbox" class="overlay" value="avgpm102022"> Average PM₁₀ 2022</label>
+    <label><input type="checkbox" class="overlay" value="pm10zonal2013"> PM₁₀ Zonal Statistics 2013</label>
+    <label><input type="checkbox" class="overlay" value="pm10conc2020"> PM₁₀ Concentration 2020</label>
+    <label><input type="checkbox" class="overlay" value="pm25aad2022_12"> PM<sub>2.5</sub> AAD 2017-2021 (12)</label>
+    <label><input type="checkbox" class="overlay" value="pm25zonal2022_18"> PM<sub>2.5</sub> Zonal Statistics 2013-2022 (18)</label>
+    <label><input type="checkbox" class="overlay" value="avgpm252022_5"> Average PM<sub>2.5</sub> 2022 (5)</label>
+    <label><input type="checkbox" class="overlay" value="pm25conc2020_8"> PM<sub>2.5</sub> Concentration 2020 (8)</label>
+    <label><input type="checkbox" class="overlay" value="no2zonal2013_2022"> NO₂ Zonal Statistics 2013-2022</label>
+    <label><input type="checkbox" class="overlay" value="pm25bivariatepop"> PM<sub>2.5</sub> Population Bivariate</label>
+  </div>
+
+  <!-- Map Controls -->
+  <div class="map-controls">
+    <!-- Zoom Controls -->
+    <div class="control-group">
+      <button class="control-btn" onclick="zoomIn()" title="Zoom In">
+        <i class="fas fa-plus"></i>
+      </button>
+      <button class="control-btn" onclick="zoomOut()" title="Zoom Out">
+        <i class="fas fa-minus"></i>
+      </button>
+      <button class="control-btn" onclick="zoomToRomania()" title="Zoom to Romania">
+        <i class="fas fa-home"></i>
+      </button>
+    </div>
+    
+    <!-- View Controls -->
+    <div class="control-group">
+      <button class="control-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+        <i class="fas fa-expand" id="fullscreenIcon"></i>
+      </button>
+      <button class="control-btn" onclick="toggleLegend()" title="Toggle Legend">
+        <i class="fas fa-list"></i>
+      </button>
+      <button class="control-btn" onclick="resetView()" title="Reset View">
+        <i class="fas fa-undo"></i>
+      </button>
+    </div>
+    
+    <!-- Info Controls -->
+    <div class="control-group">
+      <button class="control-btn" onclick="toggleInfo()" title="Information">
+        <i class="fas fa-info"></i>
+      </button>
+      <button class="control-btn" onclick="downloadMap()" title="Download Map">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend" id="legend">
+    <h4>
+      Legend
+      <span class="legend-close" onclick="toggleLegend()">×</span>
+    </h4>
+    <div id="legendContent">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ff0000;"></div>
+        <span>High NO₂ Concentration (>40 μg/m³)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ff8000;"></div>
+        <span>Medium NO₂ Concentration (20-40 μg/m³)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ffff00;"></div>
+        <span>Low NO₂ Concentration (10-20 μg/m³)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #00ff00;"></div>
+        <span>Very Low NO₂ Concentration (<10 μg/m³)</span>
+      </div>
+      <hr style="margin: 10px 0;">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #8B4513;"></div>
+        <span>Urban Areas</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #228B22;"></div>
+        <span>Forest/Vegetation</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #4169E1;"></div>
+        <span>Water Bodies</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ol@7.5.2/dist/ol.js"></script>
+  <script>
+    console.log('Starting map initialization...');
+    
+    let map;
+    let panelCollapsed = false;
+    let isFullscreen = false;
+    
+    // Status update function
+    function updateStatus(message, isLoading = false) {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = isLoading ? 'status loading' : 'status';
+      console.log('Status:', message);
+    }
+    
+    updateStatus('Creating base layers...', true);
+    
+    // Base maps
+    const osmLayer = new ol.layer.Tile({
+      title: 'OpenStreetMap',
+      visible: true,
+      source: new ol.source.OSM()
+    });
+    
+    const esriLayer = new ol.layer.Tile({
+      title: 'ESRI Satellite',
+      visible: false,
+      source: new ol.source.XYZ({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attributions: 'Tiles © Esri'
+      })
+    });
+    
+    updateStatus('Creating WMS overlays...', true);
+    
+    // WMS Configuration
+    const wmsUrl = 'https://www.gis-geoserver.polimi.it/geoserver/gisgeoserver_10/wms';
+    
+    // Function to create WMS overlay
+    function createWMSOverlay(layerName, visible = false) {
+      const layer = new ol.layer.Image({
+        visible: visible,
+        source: new ol.source.ImageWMS({
+          url: wmsUrl,
+          params: {
+            'LAYERS': `gisgeoserver_10:${layerName}`,
+            'FORMAT': 'image/png',
+            'TRANSPARENT': true
+          },
+          serverType: 'geoserver'
+        })
+      });
+      
+      // Add error handling
+      layer.getSource().on('imageloaderror', function(event) {
+        console.error(`Failed to load WMS layer: ${layerName}`, event);
+        updateStatus(`Error loading ${layerName}`);
+      });
+      
+      layer.getSource().on('imageloadend', function(event) {
+        console.log(`Successfully loaded WMS layer: ${layerName}`);
+      });
+      
+      return layer;
+    }
+    
+    // Create overlay layers
+const overlayLayers = {
+  no2dec2022: createWMSOverlay('Romania_CAMS_no2_2022_12_d'),
+  landcover2022: createWMSOverlay('Romania_LC_reclassified_2022'),
+  avgno22022: createWMSOverlay('Romania_average_no2_2022'),
+  aad2022: createWMSOverlay('Romania_no2_2017-2021_AAD_map_2022'),
+  bivariate2020: createWMSOverlay('Romania_no2_2020_bivariate.gpkg'),
+  chart2020: createWMSOverlay('Romania_no2_2020_chart.gpkg'),
+  no2zonal2013_2022: createWMSOverlay('Romania_no2_zonal_statistics_2013-2022.gpkg'),
+  conc2020: createWMSOverlay('Romania_no2_concentration_map_2020'),
+  pm10aad2022: createWMSOverlay('Romania_pm10_2017-2021_AAD_map_2022'),
+  avgpm102022: createWMSOverlay('Romania_average_pm10_2022'),
+  pm10zonal2013: createWMSOverlay('romania_pm10_zonal_statistics_2013'),
+  pm10conc2020: createWMSOverlay('Romania_pm10_concentration_map_2020'),
+  avgno22013: createWMSOverlay('romania_average_no2_2013_resampled'),
+  pm25aad2022_12: createWMSOverlay('12_Romania_pm2p5_2017-2021_AAD_map_2022'),
+  pm25zonal2022_18: createWMSOverlay('18_Romania_pm2p5_zonal_statistics_2013-2022'),
+  avgpm252022_5: createWMSOverlay('5_Romania_average_pm2p5_2022'),
+  pm25conc2020_8: createWMSOverlay('8_Romania_pm2p5_concentration_map_2020'),
+  pm25bivariatepop: createWMSOverlay('romania_population_bivariant_pm2p5')
+};
+    
+    updateStatus('Creating map...', true);
+    
+    // Create the map
+    map = new ol.Map({
+      target: 'map',
+      layers: [
+        osmLayer,
+        esriLayer,
+        ...Object.values(overlayLayers)
+      ],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([24.9, 45.9]), // Romania center
+        zoom: 6
+      }),
+      controls: [] // We'll add custom controls
+    });
+    
+    updateStatus('Setting up controls...', true);
+    
+    // Basemap switcher
+    document.querySelectorAll('input[name="basemap"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        console.log('Switching basemap to:', this.value);
+        osmLayer.setVisible(this.value === 'osm');
+        esriLayer.setVisible(this.value === 'esri');
+        updateStatus(`Switched to ${this.value === 'osm' ? 'OpenStreetMap' : 'ESRI Satellite'}`);
+      });
+    });
+    
+    // Overlay toggles
+    document.querySelectorAll('input.overlay').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const layer = overlayLayers[this.value];
+        if (layer) {
+          layer.setVisible(this.checked);
+          console.log(`Toggled ${this.value}:`, this.checked);
+          updateStatus(`${this.checked ? 'Enabled' : 'Disabled'} ${this.value}`);
+        }
+      });
+    });
+    
+    // Map load events
+    map.on('loadstart', function() {
+      updateStatus('Loading map...', true);
+    });
+    
+    map.on('loadend', function() {
+      updateStatus('Map loaded successfully!');
+      setTimeout(() => {
+        updateStatus('Ready');
+      }, 2000);
+    });
+    
+    console.log('Map initialization complete');
+    updateStatus('Map initialized');
+    
+    // Control Functions
+    function zoomIn() {
+      const view = map.getView();
+      const zoom = view.getZoom();
+      view.animate({zoom: zoom + 1, duration: 250});
+      updateStatus('Zoomed in');
+    }
+    
+    function zoomOut() {
+      const view = map.getView();
+      const zoom = view.getZoom();
+      view.animate({zoom: zoom - 1, duration: 250});
+      updateStatus('Zoomed out');
+    }
+    
+    function zoomToRomania() {
+      map.getView().animate({
+        center: ol.proj.fromLonLat([24.9, 45.9]),
+        zoom: 6,
+        duration: 1000
+      });
+      updateStatus('Zoomed to Romania');
+    }
+    
+    function resetView() {
+      map.getView().animate({
+        center: ol.proj.fromLonLat([24.9, 45.9]),
+        zoom: 6,
+        rotation: 0,
+        duration: 1000
+      });
+      updateStatus('View reset');
+    }
+    
+    function toggleLayerPanel() {
+      const panel = document.getElementById('layerSwitcher');
+      const icon = document.getElementById('panelToggleIcon');
+      
+      panelCollapsed = !panelCollapsed;
+      
+      if (panelCollapsed) {
+        panel.classList.add('collapsed');
+        icon.className = 'fas fa-chevron-right';
+      } else {
+        panel.classList.remove('collapsed');
+        icon.className = 'fas fa-chevron-left';
+      }
+    }
+    
+    function toggleLegend() {
+      const legend = document.getElementById('legend');
+      legend.classList.toggle('active');
+    }
+    
+    function toggleFullscreen() {
+      const icon = document.getElementById('fullscreenIcon');
+      
+      if (!isFullscreen) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        }
+        icon.className = 'fas fa-compress';
+        isFullscreen = true;
+        updateStatus('Entered fullscreen');
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+        icon.className = 'fas fa-expand';
+        isFullscreen = false;
+        updateStatus('Exited fullscreen');
+      }
+    }
+    
+    function toggleInfo() {
+      alert('Romania NO₂ Analysis Dashboard\\n\\nThis interactive map displays nitrogen dioxide (NO₂) concentration data across Romania from various years.\\n\\nFeatures:\\n• Multiple data layers from 2013-2022\\n• Basemap switching\\n• Zoom controls\\n• Legend display\\n\\nData Source: GeoServer WMS Services');
+    }
+    
+    function downloadMap() {
+      map.once('rendercomplete', function() {
+        const mapCanvas = document.createElement('canvas');
+        const size = map.getSize();
+        mapCanvas.width = size[0];
+        mapCanvas.height = size[1];
+        const mapContext = mapCanvas.getContext('2d');
+        
+        Array.prototype.forEach.call(
+          map.getViewport().querySelectorAll('.ol-layer canvas, canvas.ol-layer'),
+          function(canvas) {
+            if (canvas.width > 0) {
+              const opacity = canvas.parentNode.style.opacity || canvas.style.opacity;
+              mapContext.globalAlpha = opacity === '' ? 1 : Number(opacity);
+              mapContext.drawImage(canvas, 0, 0);
+            }
+          }
+        );
+        
+        const link = document.createElement('a');
+        link.download = 'romania-no2-map.png';
+        link.href = mapCanvas.toDataURL();
+        link.click();
+      });
+      
+      map.renderSync();
+      updateStatus('Map downloaded');
+    }
+    
+    function goHome() {
+      // Replace with your actual home page URL
+      if (confirm('Navigate to home page?')) {
+        window.location.href = 'index.html'; // Change this to your home page
+      }
+    }
+    
+    // Fullscreen change event
+    document.addEventListener('fullscreenchange', function() {
+      if (!document.fullscreenElement) {
+        const icon = document.getElementById('fullscreenIcon');
+        icon.className = 'fas fa-expand';
+        isFullscreen = false;
+      }
+    });
+  </script>
+</body>
+</html>
