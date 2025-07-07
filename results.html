@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Results - Romania | GIS Lab Project 2025</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header-nav {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .main-header {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .main-header h1 {
+            font-size: 3rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        .main-header .subtitle {
+            font-size: 1.3rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .main-header .description {
+            font-size: 1.1rem;
+            color: #555;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+        .results-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+        .result-card {
+            flex: 1 1 350px;
+            max-width: 420px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .result-card img {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            background: #fff;
+        }
+        .result-card .caption {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            color: #444;
+        }
+        .footer {
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-top: 2rem;
+        }
+        @media (max-width: 1200px) {
+            .results-gallery { gap: 1rem; }
+            .result-card { max-width: 350px; }
+        }
+        @media (max-width: 900px) {
+            .results-gallery { flex-direction: column; align-items: center; }
+            .result-card { width: 100%; max-width: 500px; }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .header-nav { flex-direction: column; gap: 1rem; }
+            .nav-links { gap: 1rem; }
+            .main-header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Navigation -->
+        <nav class="header-nav">
+            <a href="index.html" class="logo">🌍 Air Quality WebGIS</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="results.html" class="active">Project Results</a></li>
+                <li><a href="webgis.html">WebGIS Map</a></li>
+            </ul>
+        </nav>
+
+       <!-- Main Header -->
+<header class="main-header" style="background: linear-gradient(135deg, #f8fafc 80%, #e0e7ff 100%); border: none; box-shadow: 0 8px 32px rgba(102,126,234,0.08); position: relative; overflow: hidden; margin-bottom: 2.5rem;">
+    <div style="position:absolute;top:-40px;left:-40px;width:180px;height:180px;background:radial-gradient(circle at 60% 40%, #667eea33 60%, transparent 100%);z-index:0;"></div>
+    <div style="position:absolute;bottom:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle at 40% 60%, #764ba233 60%, transparent 100%);z-index:0;"></div>
+    <div style="position:relative;z-index:1;max-width:800px;margin:0 auto;">
+        <h1 style="font-size:2.7rem; font-weight:800; margin-bottom:0.7rem; letter-spacing:1px; background: linear-gradient(90deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            Air Quality Mapping Results
+        </h1>
+        <p class="subtitle" style="font-size:1.35rem; color:#4f46e5; font-weight:600; margin-bottom:1.2rem; letter-spacing:0.5px;">
+            <span style="background:rgba(102,126,234,0.08); padding:0.3em 1.2em; border-radius:1em; display:inline-block;">Comprehensive Spatial Analysis for Romania</span>
+        </p>
+        <p class="description" style="font-size:1.13rem; color:#444; line-height:1.8; background:rgba(255,255,255,0.92); border-radius:1em; padding:1.2em 2em; box-shadow:0 2px 12px rgba(102,126,234,0.06); margin:0 auto;">
+            This project delivers a <span style="color:#764ba2;font-weight:600;">comprehensive spatial and temporal analysis</span> of NO₂, PM2.5, and PM10 pollution across Romania, using open data, advanced GIS workflows, and interactive web mapping.
+            <br><br>
+            <span style="color:#667eea;font-weight:500;">Explore our key maps and visualizations below.</span>
+            <br>
+            <span style="display:inline-block;margin-top:1em;">
+                For interactive layers and further analysis, visit the
+                <a href="webgis.html" style="color:#fff;background:linear-gradient(90deg,#667eea,#764ba2);padding:0.4em 1.2em;border-radius:1em;text-decoration:none;font-weight:600;box-shadow:0 2px 8px #667eea22;">WebGIS Map</a>.
+            </span>
+        </p>
+    </div>
+</header>
+
+<!-- Results Gallery: Only Main Map and Charts -->
+<section class="results-gallery" style="display: flex; flex-wrap: wrap; gap: 2.5rem; justify-content: center; align-items: stretch; margin-bottom: 2rem;">
+    <!-- Land Cover Map -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/Romania_LC_Map.jpeg" alt="Romania Land Cover Map" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:cover;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>Romania Land Cover Map</strong><br>
+            ESA CCI Land Cover classification for Romania (2022)
+        </div>
+    </div>
+    <!-- NO2 Annual Average Map -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/Romania_no2_2017-2021_AAD_map_2022.jpeg" alt="Romania NO₂ 2017-2021 Annual Average Map" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:cover;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>Romania NO₂ Annual Average Map (2017–2021)</strong><br>
+            Spatial distribution of NO₂ annual average concentrations (2022)
+        </div>
+    </div>
+    <!-- NO2 Bar Chart -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/Bar_chart.png" alt="NO₂ Bar Chart" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>NO₂ Concentration Bar Chart</strong><br>
+            Distribution of NO₂ concentration classes across Romania
+        </div>
+    </div>
+    <!-- NO2 Pie Chart -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/no2_pie_chart.png" alt="NO₂ Pie Chart" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>NO₂ Population Exposure Pie Chart</strong><br>
+            Population exposure to NO₂ levels by category
+        </div>
+    </div>
+    <!-- Rplot.png -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/Rplot.png" alt="NO₂ R Plot" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>NO₂ R Plot</strong><br>
+            Statistical visualization generated in R (Rplot.png)
+        </div>
+    </div>
+    <!-- Rplot01.png -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/Rplot01.png" alt="NO₂ R Plot 01" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>NO₂ R Plot 01</strong><br>
+            Statistical visualization generated in R (Rplot01.png)
+        </div>
+    </div>
+    <!-- BAR CHART.png -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/BAR CHART.png" alt="PM₁₀ Bar Chart" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>PM₁₀ Bar Chart</strong><br>
+            Distribution of PM₁₀ concentration classes across Romania
+        </div>
+    </div>
+    <!-- COUNTRY_pm10_2020_chart.png -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/COUNTRY_pm10_2020_chart.png" alt="PM₁₀ 2020 Chart" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>PM₁₀ 2020 Chart</strong><br>
+            PM₁₀ concentration chart for Romania (2020)
+        </div>
+    </div>
+    <!-- romania_pm10_zonal_statistics_2013.jpg -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/romania_pm10_zonal_statistics_2013.jpg" alt="PM₁₀ Zonal Statistics 2013" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>PM₁₀ Zonal Statistics (2013)</strong><br>
+            Zonal statistics of PM₁₀ concentrations for Romania (2013)
+        </div>
+    </div>
+    <!-- Romania_pm10_2017-2021_AAD_map_2022_1.jpg -->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="images/Romania_pm10_2017-2021_AAD_map_2022_1.jpg" alt="Romania PM₁₀ AAD Map 2017–2021" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>Romania PM₁₀ AAD Map (2017–2021)</strong><br>
+            Annual average daily PM₁₀ concentrations (2017–2021)
+        </div>
+    </div>
+    <!--Romania_pm2p5-->
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="VimalaSakshiGangu_pm2p5/Romania_pm2p5_2017-2021_AAD_map_2022.png" alt="AAD_Map" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong> Romania PM<sub>2.5</sub> Annual Average Map (2017–2021)</strong><br>
+            Spatial distribution of PM<sub>2.5</sub> annual average concentrations 
+        </div>
+    </div>
+    <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="VimalaSakshiGangu_pm2p5/18_Graphs/Romania_pm2p5_zonal_statistics_2013-2022.png" alt="Zonal Statistics" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>PM<sub>2.5</sub> Concentration Bar Chart</strong><br>
+            Distribution of PM<sub>2.5</sub> concentration classes across Romania
+        </div>
+    </div>
+     <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="VimalaSakshiGangu_pm2p5/24_Pie Chart/Romania_pm2p5_2020_chart.jpg" alt="Pie Chart" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>PM<sub>2.5</sub> Population Exposure Pie Chart</strong><br>
+            Population exposure to PM<sub>2.5</sub> levels
+        </div>
+    </div>
+     <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="VimalaSakshiGangu_pm2p5/Romania_pm2p5_zonal_statistics_2013-2022.png" alt="romania_pm2P5_zonal_statistics" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>PM<sub>2.5</sub> Zonal Statistics</strong><br>
+            Distribution of  Zonal statistics of PM<sub>2.5</sub> concentrations for Romania
+        </div>
+    </div>
+     <div class="result-card" style="flex:1 1 340px; max-width:400px; min-width:260px; display:flex; flex-direction:column; align-items:center; background:#f8f9fa; border-radius:15px; padding:1.5rem 1rem 1.2rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <img src="VimalaSakshiGangu_pm2p5/Romania_pm2p5_2020_Bivariate.png" alt="PM2.5 2020 Chart" style="width:100%;max-width:340px;aspect-ratio:4/3;object-fit:contain;background:#fff;">
+        <div class="caption" style="text-align:center;margin-top:0.8rem;font-weight:500;color:#444;">
+            <strong>PM<sub>2.5</sub> Bivariate Map</strong><br>
+            Distribution of PM<sub>2.5</sub> w.r.t high pollution and pollution across Romania
+        </div>
+</section>
